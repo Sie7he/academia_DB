@@ -1,0 +1,144 @@
+SET TIME ZONE 'Chile/Continental';
+
+
+DROP TABLE IF EXISTS contactos;
+DROP TABLE IF EXISTS direcciones;
+DROP TABLE IF EXISTS comunas;
+DROP TABLE IF EXISTS provincias;
+DROP TABLE IF EXISTS regiones;
+DROP TABLE IF EXISTS usuarios;
+DROP TABLE IF EXISTS relaciones;
+
+-- Creación de tablas sin dependencias
+
+CREATE TABLE usuarios(
+	id_usuario SERIAL PRIMARY KEY,
+	nombre VARCHAR(70) NOT NULL,
+	apellido VARCHAR(70) NOT NULL,
+	correo VARCHAR(100) NOT NULL,
+	contraseña_hash VARCHAR(255) NOT NULL,
+	salt  VARCHAR(255) NOT NULL,
+	fecha_registro TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE regiones(
+	id_region SERIAL PRIMARY KEY,
+	nombre_region VARCHAR(70) NOT NULL
+);
+
+CREATE TABLE relaciones(
+	id_relacion SERIAL PRIMARY KEY,
+	nombre_relacion VARCHAR(35) NOT NULL
+);
+
+-- Creación de tablas con dependencias
+
+
+CREATE TABLE provincias(
+	id_provincia SERIAL PRIMARY KEY,
+	nombre_provincia VARCHAR(70),
+	region INT NOT NULL,
+	FOREIGN KEY (region) REFERENCES regiones(id_region)
+);
+
+CREATE TABLE comunas(
+	id_comuna SERIAL PRIMARY KEY,
+	nombre_comuna VARCHAR(70),
+	provincia INT NOT NULL,
+	FOREIGN KEY (provincia) REFERENCES provincias(id_provincia)
+);
+
+CREATE TABLE direcciones(
+	id_direccion SERIAL PRIMARY KEY,
+	usuario INT NOT NULL,
+	comuna INT NOT NULL,
+	calle VARCHAR(255) NOT NULL,
+	numero INT NOT NULL,
+	torre_departamento VARCHAR(5),
+	numero_departamento INT,
+	FOREIGN KEY (usuario) REFERENCES usuarios(id_usuario),
+	FOREIGN KEY (comuna) REFERENCES comunas(id_comuna)
+);
+
+CREATE TABLE contactos(
+	id_contacto SERIAL PRIMARY KEY,	
+	usuario INT NOT NULL,
+	relacion INT NOT NULL,
+	nombre_contacto VARCHAR(140) NOT NULL,
+	correo_contacto VARCHAR(100) NOT NULL,
+	telefono VARCHAR(20),
+	FOREIGN KEY (usuario) REFERENCES usuarios(id_usuario),
+	FOREIGN KEY (relacion) REFERENCES relaciones(id_relacion)
+);
+
+-- Inserción en la tabla `regiones`
+
+INSERT INTO regiones (nombre_region) VALUES 
+ ('Región Metropolitana'),
+ ('Región de Valparaíso'),
+ ('Región del Biobío'),
+ ('Región de Araucanía'),
+ ('Región de Los Lagos');
+
+-- Inserción en la tabla `provincias`
+INSERT INTO provincias (nombre_provincia, region) VALUES 
+ ('Provincia de Santiago', 1),
+ ('Provincia de Valparaíso', 2),
+ ('Provincia de Concepción', 3),
+ ('Provincia de Cautín', 4),
+ ('Provincia de Llanquihue', 5);
+
+-- Inserción en la tabla `comunas`
+INSERT INTO comunas (nombre_comuna, provincia) VALUES 
+ ('Santiago', 1),
+ ('Valparaíso', 2),
+ ('Concepción', 3),
+ ('Temuco', 4),
+ ('Puerto Montt', 5);
+
+
+-- Inserción en la tabla `usuarios`
+INSERT INTO usuarios (nombre, apellido, correo, contraseña_hash, salt) VALUES 
+ ('Juan', 'Pérez', 'juan.perez@example.com', 'hash1', 'salt1'),
+ ('María', 'González', 'maria.gonzalez@example.com', 'hash2', 'salt2'),
+ ('Pedro', 'López', 'pedro.lopez@example.com', 'hash3', 'salt3'),
+ ('Carmen', 'Díaz', 'carmen.diaz@example.com', 'hash4', 'salt4'),
+ ('Ana', 'Martinez', 'ana.martinez@example.com', 'hash5', 'salt5');
+
+-- Inserción en la tabla `direcciones`
+INSERT INTO direcciones (usuario, comuna, calle, numero) VALUES 
+ (1, 1, 'Calle Falsa', 123),
+ (2, 2, 'Avenida Siempreviva', 456),
+ (3, 3, 'Paseo de la Reforma', 789),
+ (4, 4, 'Camino Largo', 101);
+					  
+-- Inserción en la tabla `direcciones` simulando un departamento (o apartamento)					  
+INSERT INTO direcciones (usuario, comuna, calle, numero, torre_departamento, numero_departamento) VALUES 				 
+ (5, 5, 'Ruta del Sol', 202, 'A', 102);
+
+-- Inserción en la tabla `relaciones`
+INSERT INTO relaciones (nombre_relacion) VALUES
+ ('Amigo'),
+ ('Familiar'),
+ ('Colega'),
+ ('Vecino'),
+ ('Conocido');
+
+-- Inserción en la tabla `contactos`
+INSERT INTO contactos (usuario, relacion, nombre_contacto, correo_contacto) VALUES
+(1, 1, 'Roberto Acuña', 'roberto.acuna@example.com'),
+(2, 2, 'Laura Torres', 'laura.torres@example.com'),
+(3, 3, 'Pedro Reyes', 'pedropedropedropedrope@mapache.com');
+
+--QUERYS
+
+SELECT  CONCAT(u.nombre,' ',u.apellido) AS nombre_completo , co.nombre_comuna, d.calle, c.nombre_contacto, r.nombre_relacion 
+FROM usuarios u 
+JOIN direcciones d 
+ON u.id_usuario = d.usuario
+JOIN comunas co
+ON d.comuna = co.id_comuna
+JOIN contactos c
+ON u.id_usuario = c.usuario
+JOIN relaciones r
+ON r.id_relacion = c.relacion
